@@ -1,0 +1,37 @@
+name: "CodeQL Analysis on Argo Workflows"
+
+on:
+  push:  # This triggers the workflow on every push event (new commit)
+    branches:
+      - main  # Specify the branch you want to monitor (e.g., 'main')
+
+  pull_request:  # Optional: Triggers the workflow on pull requests
+    branches:
+      - main
+
+jobs:
+  codeql:
+    name: Analyze with CodeQL
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: 'go'  # Adjust languages to the repository
+
+    - name: Run CodeQL analysis
+      uses: github/codeql-action/analyze@v2
+      continue-on-error: true
+
+    - name: Send CodeQL report to Slack
+      if: always()
+      run: |
+        echo "Sending results to Slack..."
+        results=$(cat ${GITHUB_WORKSPACE}/codeql-results.json)
+        curl -X POST -H 'Content-type: application/json' --data \
+        '{"text": "CodeQL Scan Results:\n'"$results"'"}' \
+        https://hooks.slack.com/services/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
